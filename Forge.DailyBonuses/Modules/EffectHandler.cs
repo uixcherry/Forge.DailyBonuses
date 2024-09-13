@@ -48,7 +48,7 @@ namespace Forge.DailyBonuses.Modules
             EffectManager.sendUIEffect(Plugin.Instance.Configuration.Instance.EffectID, Plugin.Instance.Configuration.Instance.EffectKey, transportConnection, true);
         }
 
-        private static int CalculateClaimedDays(Data playerData)
+        public static int CalculateClaimedDays(Data playerData)
         {
             if (playerData.LastBonusClaim.Date == DateTime.Today)
             {
@@ -69,7 +69,7 @@ namespace Forge.DailyBonuses.Modules
             }
         }
 
-        private static void GiveBonus(UnturnedPlayer player, int day)
+        public static void GiveBonus(UnturnedPlayer player, int day)
         {
             foreach (var command in Plugin.Instance.Configuration.Instance.DailyBonuses.FirstOrDefault(bonus => bonus.Day == day).Commands)
             {

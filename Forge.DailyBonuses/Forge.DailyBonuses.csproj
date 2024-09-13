@@ -72,6 +72,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandDaily.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Data\Data.cs" />
     <Compile Include="Data\DataManager.cs" />
