@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Forge.DailyBonuses.Data
+public class Data
 {
-    internal class Data
-    {
-    }
+    public ulong SteamID64 { get; set; }
+    public DateTime LastBonusClaim { get; set; }
+    public string LastBonusType { get; set; }
 }
