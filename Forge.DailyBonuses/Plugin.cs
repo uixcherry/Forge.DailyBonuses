@@ -43,7 +43,10 @@ namespace Forge.DailyBonuses
             { "DailyBonus_ResetSuccess", "Daily bonus progress for player {0} has been reset." },
             { "DailyBonus_InvalidSteamID", "Invalid SteamID64 format." },
             { "DailyBonus_Usage", "Usage: /daily [reset <steamID64>]" },
-            { "DailyBonus_ConfigError", "Configuration error: Please specify bonuses for exactly 7 days for proper functionality." }
+            { "DailyBonus_ConfigError", "Configuration error: Please specify bonuses for exactly 7 days for proper functionality." },
+            { "DailyBonus_Button_Claim", "Claim" },
+            { "DailyBonus_Button_Claimed", "Claimed" },
+            { "DailyBonus_Button_Unavailable", "Unavailable" }
         };
     }
 }

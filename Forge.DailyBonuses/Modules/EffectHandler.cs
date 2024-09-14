@@ -21,6 +21,11 @@ namespace Forge.DailyBonuses.Modules
                 playerData = Plugin.Instance.DataManager.GetPlayerData(unturnedPlayer.CSteamID.m_SteamID);
             }
 
+            if (buttonName == "forge.daily_close")
+            {
+                EffectManager.askEffectClearByID(Plugin.Instance.Configuration.Instance.EffectID, unturnedPlayer.Player.channel.owner.transportConnection);
+            }
+
             int claimedDays = CalculateClaimedDays(playerData);
 
             Dictionary<string, int> buttonToDayMap = new Dictionary<string, int>
@@ -45,7 +50,34 @@ namespace Forge.DailyBonuses.Modules
         public static void sendEffectReward(UnturnedPlayer player)
         {
             ITransportConnection transportConnection = player.Player.channel.GetOwnerTransportConnection();
+
+            Data playerData = Plugin.Instance.DataManager.GetPlayerData(player.CSteamID.m_SteamID);
+            int claimedDays = CalculateClaimedDays(playerData);
+
+            DateTime nextBonusTime = playerData.LastBonusClaim.Date.AddDays(1);
+            TimeSpan timeUntilNextBonus = nextBonusTime - DateTime.Now;
+            string formattedTime = timeUntilNextBonus.ToString(@"hh\:mm");
+
             EffectManager.sendUIEffect(Plugin.Instance.Configuration.Instance.EffectID, Plugin.Instance.Configuration.Instance.EffectKey, transportConnection, true);
+            EffectManager.sendUIEffectText(Plugin.Instance.Configuration.Instance.EffectKey, transportConnection, true, "forge.daily_timer", formattedTime);
+
+            for (int i = 0; i < 7; i++)
+            {
+                string buttonName = $"forge.daily_day_{i}_text";
+                string buttonText = GetButtonText(i, claimedDays);
+                EffectManager.sendUIEffectText(Plugin.Instance.Configuration.Instance.EffectKey, transportConnection, true,
+                    buttonName, buttonText);
+            }
+        }
+
+        private static string GetButtonText(int buttonIndex, int claimedDays)
+        {
+            if (claimedDays > buttonIndex)
+                return Plugin.Instance.Translate("DailyBonus_Button_Claimed");
+            else if (claimedDays == buttonIndex)
+                return Plugin.Instance.Translate("DailyBonus_Button_Claim");
+            else
+                return Plugin.Instance.Translate("DailyBonus_Button_Unavailable");
         }
 
         public static int CalculateClaimedDays(Data playerData)
