@@ -1,12 +1,14 @@
-﻿using Rocket.API;
+﻿using Forge.DailyBonuses.Modules;
+using Rocket.API;
 using Rocket.Unturned.Chat;
+using Rocket.Unturned.Player;
 using System.Collections.Generic;
 
 namespace Forge.DailyBonuses.Commands
 {
     public class CommandDaily : IRocketCommand
     {
-        public AllowedCaller AllowedCaller => AllowedCaller.Console;
+        public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
         public string Name => "daily";
 
@@ -20,21 +22,28 @@ namespace Forge.DailyBonuses.Commands
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
-            if (command.Length == 2 && command[0].ToLower() == "reset")
+            if (caller is ConsolePlayer)
             {
-                if (ulong.TryParse(command[1], out ulong steamID64))
+                if (command.Length == 2 && command[0].ToLower() == "reset")
                 {
-                    Plugin.Instance.DataManager.DeletePlayerData(steamID64);
-                    UnturnedChat.Say(caller, Plugin.Instance.Translate("DailyBonus_ResetSuccess", steamID64));
+                    if (ulong.TryParse(command[1], out ulong steamID64))
+                    {
+                        Plugin.Instance.DataManager.DeletePlayerData(steamID64);
+                        UnturnedChat.Say(caller, Plugin.Instance.Translate("DailyBonus_ResetSuccess", steamID64));
+                    }
+                    else
+                    {
+                        UnturnedChat.Say(caller, Plugin.Instance.Translate("DailyBonus_InvalidSteamID"));
+                    }
                 }
                 else
                 {
-                    UnturnedChat.Say(caller, Plugin.Instance.Translate("DailyBonus_InvalidSteamID"));
+                    UnturnedChat.Say(caller, Plugin.Instance.Translate("DailyBonus_Usage"));
                 }
             }
-            else
+            else if (caller is UnturnedPlayer player)
             {
-                UnturnedChat.Say(caller, Plugin.Instance.Translate("DailyBonus_Usage"));
+                EffectHandler.sendEffectReward(player);
             }
         }
     }

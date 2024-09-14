@@ -24,6 +24,7 @@ namespace Forge.DailyBonuses.Modules
             if (buttonName == "forge.daily_close")
             {
                 EffectManager.askEffectClearByID(Plugin.Instance.Configuration.Instance.EffectID, unturnedPlayer.Player.channel.owner.transportConnection);
+                unturnedPlayer.Player.disablePluginWidgetFlag(EPluginWidgetFlags.Modal);
             }
 
             int claimedDays = CalculateClaimedDays(playerData);
@@ -42,8 +43,17 @@ namespace Forge.DailyBonuses.Modules
             if (buttonToDayMap.TryGetValue(buttonName, out int day) && claimedDays == day - 1)
             {
                 GiveBonus(unturnedPlayer, day);
+
+                playerData.LastBonusClaim = DateTime.Now;
+                if (day == 7 && Plugin.Instance.Configuration.Instance.ResetProgressAfterAllBonuses)
+                {
+                    playerData.LastBonusClaim = playerData.LastBonusClaim.AddDays(-6);
+                }
+
                 Plugin.Instance.DataManager.UpdatePlayerData(playerData);
                 Plugin.Instance.DataManager.SaveData();
+
+                sendEffectReward(unturnedPlayer);
             }
         }
 
@@ -68,6 +78,8 @@ namespace Forge.DailyBonuses.Modules
                 EffectManager.sendUIEffectText(Plugin.Instance.Configuration.Instance.EffectKey, transportConnection, true,
                     buttonName, buttonText);
             }
+
+            player.Player.enablePluginWidgetFlag(EPluginWidgetFlags.Modal);
         }
 
         private static string GetButtonText(int buttonIndex, int claimedDays)
@@ -82,21 +94,45 @@ namespace Forge.DailyBonuses.Modules
 
         public static int CalculateClaimedDays(Data playerData)
         {
-            if (playerData.LastBonusClaim.Date == DateTime.Today)
+            if (playerData.LastBonusClaim == DateTime.MinValue)
             {
-                return Plugin.Instance.Configuration.Instance.DailyBonuses.FindIndex(bonus => bonus.Day == (playerData.LastBonusClaim.DayOfYear % 7) + 1) + 1;
+                return 0;
             }
             else
             {
                 TimeSpan timeSinceLastClaim = DateTime.Today - playerData.LastBonusClaim.Date;
 
-                if (timeSinceLastClaim.Days > 1 && !Plugin.Instance.Configuration.Instance.AllowClaimingMissedBonuses)
+                if (timeSinceLastClaim.Days == 0)
+                {
+                    return Plugin.Instance.Configuration.Instance.DailyBonuses
+                        .FindIndex(bonus => bonus.Day == (playerData.LastBonusClaim.DayOfYear % 7) + 1) + 1;
+                }
+                else if (timeSinceLastClaim.Days == 1)
+                {
+                    return Plugin.Instance.Configuration.Instance.DailyBonuses
+                        .FindIndex(bonus => bonus.Day == (playerData.LastBonusClaim.DayOfYear % 7) + 1) + 2;
+                }
+                else if (timeSinceLastClaim.Days > 1 && !Plugin.Instance.Configuration.Instance.AllowClaimingMissedBonuses)
                 {
                     return 0;
                 }
                 else
                 {
-                    return Math.Min(timeSinceLastClaim.Days, 7);
+                    int daysSinceLastClaim = (int)timeSinceLastClaim.TotalDays;
+                    int lastClaimedDay = Plugin.Instance.Configuration.Instance.DailyBonuses
+                        .FindIndex(bonus => bonus.Day == (playerData.LastBonusClaim.DayOfYear % 7) + 1) + 1;
+
+                    int nextDay = (lastClaimedDay % 7) + 1;
+                    int missedDays = (daysSinceLastClaim - 1) % 7;
+
+                    if (missedDays >= (7 - lastClaimedDay + 1))
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return nextDay + missedDays;
+                    }
                 }
             }
         }

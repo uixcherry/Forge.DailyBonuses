@@ -72,7 +72,6 @@ namespace Forge.DailyBonuses
                 playerData.Remove(existingData);
                 playerData.Add(newData);
                 SaveData();
-                Rocket.Core.Logging.Logger.Log($"Updated DailyBonus data for player {newData.SteamID64}");
             }
         }
 
