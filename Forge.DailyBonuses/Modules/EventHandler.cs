@@ -25,6 +25,7 @@ namespace Forge.DailyBonuses.Modules
         private static bool ShouldShowUI(Data playerData)
         {
             bool hasActiveBonus = playerData.LastBonusClaim.Date < DateTime.Today;
+
             bool hasAllBonuses = playerData.LastBonusClaim.Date == DateTime.Today &&
                                  (playerData.LastBonusClaim.DayOfYear % 7) == 6 &&
                                  Plugin.Instance.Configuration.Instance.ResetProgressAfterAllBonuses;

@@ -4,7 +4,6 @@ using SDG.Unturned;
 using System;
 using Rocket.Core;
 using System.Linq;
-using System.Collections.Generic;
 
 namespace Forge.DailyBonuses.Modules
 {
@@ -23,28 +22,17 @@ namespace Forge.DailyBonuses.Modules
 
             if (buttonName == "forge.daily_close")
             {
-                EffectManager.askEffectClearByID(Plugin.Instance.Configuration.Instance.EffectID, unturnedPlayer.Player.channel.owner.transportConnection);
-                unturnedPlayer.Player.disablePluginWidgetFlag(EPluginWidgetFlags.Modal);
+                CloseUI(unturnedPlayer);
+                return;
             }
 
             int claimedDays = CalculateClaimedDays(playerData);
 
-            Dictionary<string, int> buttonToDayMap = new Dictionary<string, int>
-            {
-                { "forge.daily_day_0", 1 },
-                { "forge.daily_day_1", 2 },
-                { "forge.daily_day_2", 3 },
-                { "forge.daily_day_3", 4 },
-                { "forge.daily_day_4", 5 },
-                { "forge.daily_day_5", 6 },
-                { "forge.daily_day_6", 7 }
-            };
-
-            if (buttonToDayMap.TryGetValue(buttonName, out int day) && claimedDays == day - 1)
+            if (TryGetDayFromButton(buttonName, out int day) && claimedDays == day - 1)
             {
                 GiveBonus(unturnedPlayer, day);
-
                 playerData.LastBonusClaim = DateTime.Now;
+
                 if (day == 7 && Plugin.Instance.Configuration.Instance.ResetProgressAfterAllBonuses)
                 {
                     playerData.LastBonusClaim = playerData.LastBonusClaim.AddDays(-6);
@@ -75,11 +63,17 @@ namespace Forge.DailyBonuses.Modules
             {
                 string buttonName = $"forge.daily_day_{i}_text";
                 string buttonText = GetButtonText(i, claimedDays);
-                EffectManager.sendUIEffectText(Plugin.Instance.Configuration.Instance.EffectKey, transportConnection, true,
-                    buttonName, buttonText);
+                EffectManager.sendUIEffectText(Plugin.Instance.Configuration.Instance.EffectKey, transportConnection, true, buttonName, buttonText);
             }
 
             player.Player.enablePluginWidgetFlag(EPluginWidgetFlags.Modal);
+        }
+
+        private static bool TryGetDayFromButton(string buttonName, out int day)
+        {
+            day = 0;
+            return buttonName.StartsWith("forge.daily_day_") &&
+                   int.TryParse(buttonName.Substring("forge.daily_day_".Length), out day);
         }
 
         private static string GetButtonText(int buttonIndex, int claimedDays)
@@ -89,7 +83,13 @@ namespace Forge.DailyBonuses.Modules
             else if (claimedDays == buttonIndex)
                 return Plugin.Instance.Translate("DailyBonus_Button_Claim");
             else
-                return Plugin.Instance.Translate("DailyBonus_Button_Unavailable");
+            {
+                int remainingDays = (buttonIndex - claimedDays + 7) % 7;
+                if (remainingDays == 0)
+                    remainingDays = 7;
+
+                return string.Format(Plugin.Instance.Translate("DailyBonus_Button_Unavailable"), buttonIndex + 1, remainingDays);
+            }
         }
 
         public static int CalculateClaimedDays(Data playerData)
@@ -150,6 +150,15 @@ namespace Forge.DailyBonuses.Modules
             {
                 playerData.LastBonusClaim = playerData.LastBonusClaim.AddDays(-6);
             }
+        }
+
+        private static void CloseUI(UnturnedPlayer player)
+        {
+            EffectManager.askEffectClearByID(
+                Plugin.Instance.Configuration.Instance.EffectID,
+                player.Player.channel.owner.transportConnection
+            );
+            player.Player.disablePluginWidgetFlag(EPluginWidgetFlags.Modal);
         }
     }
 }
